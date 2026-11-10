@@ -1,0 +1,34 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 560" width="400" height="560">
+  <rect width="400" height="560" fill="#f8fafc"/>
+  <rect x="28" y="20" width="344" height="520" rx="8" fill="#ffffff" stroke="#cbd5e1" stroke-width="2"/>
+  <text x="200" y="58" font-family="monospace" font-size="16" font-weight="bold" fill="#0f172a" text-anchor="middle">GROSIR PASAR INDUK ADHI</text>
+  <text x="200" y="78" font-family="monospace" font-size="11" fill="#475569" text-anchor="middle">NOTA BELANJA KULAKAN HARIAN</text>
+  <line x1="48" y1="95" x2="352" y2="95" stroke="#94a3b8" stroke-width="1.5" stroke-dasharray="4 4"/>
+  <text x="48" y="118" font-family="monospace" font-size="11" fill="#334155">Tgl: 09/11/2026</text>
+  <text x="352" y="118" font-family="monospace" font-size="11" fill="#334155" text-anchor="end">Kasir: Agen #04</text>
+  <line x1="48" y1="132" x2="352" y2="132" stroke="#94a3b8" stroke-width="1.5" stroke-dasharray="4 4"/>
+  
+  <text x="48" y="160" font-family="monospace" font-size="12" font-weight="bold" fill="#0f172a">1. Beras Medium (25 kg)</text>
+  <text x="64" y="178" font-family="monospace" font-size="11" fill="#475569">25 kg x Rp 13.000</text>
+  <text x="352" y="178" font-family="monospace" font-size="12" font-weight="bold" fill="#0f172a" text-anchor="end">Rp 325.000</text>
+
+  <text x="48" y="210" font-family="monospace" font-size="12" font-weight="bold" fill="#0f172a">2. Minyakita Pouch (12 L)</text>
+  <text x="64" y="228" font-family="monospace" font-size="11" fill="#475569">12 L x Rp 15.500</text>
+  <text x="352" y="228" font-family="monospace" font-size="12" font-weight="bold" fill="#0f172a" text-anchor="end">Rp 186.000</text>
+
+  <text x="48" y="260" font-family="monospace" font-size="12" font-weight="bold" fill="#0f172a">3. Cabai Rawit Merah (2 kg)</text>
+  <text x="64" y="278" font-family="monospace" font-size="11" fill="#475569">2 kg x Rp 46.500</text>
+  <text x="352" y="278" font-family="monospace" font-size="12" font-weight="bold" fill="#0f172a" text-anchor="end">Rp 93.000</text>
+
+  <line x1="48" y1="310" x2="352" y2="310" stroke="#94a3b8" stroke-width="1.5" stroke-dasharray="4 4"/>
+  <text x="48" y="338" font-family="monospace" font-size="14" font-weight="bold" fill="#0f172a">TOTAL NOTA PASAR</text>
+  <text x="352" y="338" font-family="monospace" font-size="15" font-weight="bold" fill="#0d9488" text-anchor="end">Rp 604.000</text>
+  <line x1="48" y1="355" x2="352" y2="355" stroke="#94a3b8" stroke-width="1.5" stroke-dasharray="4 4"/>
+
+  <rect x="48" y="380" width="304" height="58" rx="6" fill="#f0fdf4" stroke="#86efac" stroke-width="1"/>
+  <text x="200" y="405" font-family="monospace" font-size="12" font-weight="bold" fill="#15803d" text-anchor="middle">STATUS: LUNAS TUNAI</text>
+  <text x="200" y="423" font-family="monospace" font-size="10" fill="#166534" text-anchor="middle">Diverifikasi Otomatis ke Stokku ERP</text>
+
+  <text x="200" y="485" font-family="monospace" font-size="10" fill="#64748b" text-anchor="middle">Terima kasih atas kepercayaan Anda</text>
+  <text x="200" y="502" font-family="monospace" font-size="10" fill="#94a3b8" text-anchor="middle">Warung Sembako &amp; Sayur Adhi Jaya</text>
+</svg>

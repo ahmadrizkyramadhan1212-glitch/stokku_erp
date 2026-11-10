@@ -1,0 +1,21 @@
+{
+  "name": "STOKKU ERP - Sistem Manajemen Warung Sembako & Sayur",
+  "short_name": "STOKKU ERP",
+  "description": "Sistem Informasi Manajemen, Kasir POS, SPK SAW + BCG & AI Assistant untuk Warung Sembako & Sayur Modern",
+  "start_url": "/dashboard",
+  "scope": "/",
+  "display": "standalone",
+  "orientation": "portrait-primary",
+  "background_color": "#F8FAFC",
+  "theme_color": "#0D9488",
+  "lang": "id-ID",
+  "icons": [
+    {
+      "src": "/icons/stokku-icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ]
+}
+
