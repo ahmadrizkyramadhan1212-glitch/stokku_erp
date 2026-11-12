@@ -1,4 +1,4 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="{{ str_replace('_', '-', app()->getLocale()) }}">
 <head>
     <meta charset="utf-8">
@@ -57,10 +57,7 @@
         })();
     </script>
 
-    <!-- PWA Manifest & Icon -->
-    <link rel="manifest" href="{{ asset('manifest.json') }}">
     <link rel="icon" type="image/svg+xml" href="{{ asset('icons/stokku-icon.svg') }}">
-    <link rel="apple-touch-icon" href="{{ asset('icons/stokku-icon.svg') }}">
 
     <!-- Fonts: Inter & Material Symbols Outlined -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -70,6 +67,22 @@
 
     <!-- Vite Assets -->
     @vite(['resources/css/app.css', 'resources/js/app.js'])
+
+    <!-- PWA Configuration -->
+    <link rel="manifest" href="{{ asset('manifest.json') }}">
+    <meta name="theme-color" content="#0f766e">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="STOKKU ERP">
+    <link rel="apple-touch-icon" href="{{ asset('logo-192.png') }}">
+    <script>
+      if ('serviceWorker' in navigator) {
+        window.addEventListener('load', function () {
+          navigator.serviceWorker.register("{{ asset('sw.js') }}");
+        });
+      }
+    </script>
 </head>
 <body class="bg-slate-50 dark:bg-slate-950 font-sans text-slate-900 dark:text-slate-100 antialiased selection:bg-[#0D9488] selection:text-white transition-colors duration-200">
 
