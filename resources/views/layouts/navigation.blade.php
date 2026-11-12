@@ -149,11 +149,11 @@
         @endif
     </nav>
 
-    <!-- B. Tombol Bulat AI "Falah" di Kanan Bawah (100% Vector SVG Custom Karakter Falah + Bintang AI) -->
+    <!-- B. Tombol Bulat Tanya Stokku AI di Kanan Bawah (100% Vector SVG Custom Karakter Falah + Bintang AI) -->
     <button type="button"
             onclick="window.dispatchEvent(new CustomEvent('toggle-falah-ai'))"
-            title="Buka Asisten AI Falah"
-            aria-label="Buka Asisten AI Falah"
+            title="Buka Tanya Stokku AI (Google Gemini 2.5 Flash)"
+            aria-label="Buka Tanya Stokku AI"
             class="pointer-events-auto w-14 h-14 rounded-full bg-gradient-to-tr from-[#0F766E] via-[#0D9488] to-emerald-500 shadow-xl shadow-teal-600/40 border border-white/30 flex items-center justify-center text-white shrink-0 hover:scale-105 active:scale-95 transition-all cursor-pointer">
         <svg class="w-9 h-9" viewBox="0 0 64 64" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
             <!-- Bintang AI Vector di Sudut Kanan Atas -->
@@ -182,11 +182,11 @@
     </button>
 </div>
 
-<!-- Tombol Bulat AI "Falah" untuk Layar Desktop (>= md) (100% Vector SVG Custom Karakter Falah) -->
+<!-- Tombol Bulat Tanya Stokku AI untuk Layar Desktop (>= md) (100% Vector SVG Custom Karakter Falah) -->
 <button type="button"
         onclick="window.dispatchEvent(new CustomEvent('toggle-falah-ai'))"
-        title="Buka Asisten AI Falah"
-        aria-label="Buka Asisten AI Falah"
+        title="Buka Tanya Stokku AI (Google Gemini 2.5 Flash)"
+        aria-label="Buka Tanya Stokku AI"
         class="hidden md:flex fixed bottom-6 right-6 z-40 w-14 h-14 rounded-full bg-gradient-to-tr from-[#0F766E] via-[#0D9488] to-emerald-500 shadow-xl shadow-teal-600/40 border border-white/30 items-center justify-center text-white hover:scale-105 active:scale-95 transition-all cursor-pointer">
     <svg class="w-9 h-9" viewBox="0 0 64 64" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
         <!-- Bintang AI Vector di Sudut Kanan Atas -->

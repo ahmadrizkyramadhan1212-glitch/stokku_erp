@@ -40,4 +40,9 @@ return [
         'owner_wa' => env('OWNER_WA_NUMBER', '6281234567890'),
     ],
 
+    // Google Gemini 2.5 Flash AI Service
+    'gemini' => [
+        'key' => env('GEMINI_API_KEY'),
+    ],
+
 ];

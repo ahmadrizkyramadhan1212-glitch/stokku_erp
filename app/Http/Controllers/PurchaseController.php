@@ -9,6 +9,7 @@ use App\Models\IngredientPrice;
 use App\Models\Purchase;
 use App\Models\PurchaseItem;
 use App\Models\Supplier;
+use App\Services\GeminiService;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Collection;
@@ -71,14 +72,14 @@ class PurchaseController extends Controller
 
     /**
      * Endpoint AI OCR / NLP Parser untuk mengekstrak foto struk atau ketikan nota bebas.
-     * Mendukung Gemini API bila tersedia + Fallback Regex Lokal yang 100% andal tanpa kuota API.
+     * Menggunakan Google Gemini 2.5 Flash Vision & NLP dengan Fallback Regex Lokal Cerdas.
      */
-    public function parseReceipt(Request $request)
+    public function parseReceipt(Request $request, GeminiService $geminiService)
     {
         $request->validate([
-            'note_text'     => 'nullable|string|max:2000',
-            'receipt'       => 'nullable|file|mimes:jpg,jpeg,png,webp|max:5120',
-            'receipt_image' => 'nullable|file|mimes:jpg,jpeg,png,webp|max:5120',
+            'note_text'     => 'nullable|string|max:3000',
+            'receipt'       => 'nullable|file|mimes:jpg,jpeg,png,webp|max:8192',
+            'receipt_image' => 'nullable|file|mimes:jpg,jpeg,png,webp|max:8192',
         ]);
 
         $ingredients = Ingredient::with('supplier')
@@ -90,22 +91,34 @@ class PurchaseController extends Controller
         $hasImage = $uploadedFile !== null;
         $receiptPath = null;
         $source = 'Regex NLP Lokal';
+        $items = [];
 
-        // Jika ada unggahan file gambar struk fisik, simpan ke storage publik & jalankan OCR
+        // Jika ada unggahan file gambar struk fisik, simpan ke storage publik
         if ($hasImage) {
             $receiptPath = $uploadedFile->store('receipts', 'public');
-            $geminiItems = $this->tryGeminiExtraction($request, $ingredients, $rawText);
-            if (! empty($geminiItems)) {
-                $source = 'Gemini AI Vision OCR';
-                $items = $geminiItems;
-            } else {
-                $source = 'OCR Struk Pasar (Fallback Lokal)';
-                $sample = 'Beli cabai keriting 8kg 360000, daun jeruk 10 ikat 100000, jagung manis 12kg 144000';
-                $items = $this->parseTextWithLocalEngine($rawText ?: $sample, $ingredients);
+        }
+
+        // 1. Coba ekstraksi menggunakan Google Gemini 2.5 Flash (Vision & NLP)
+        if ($hasImage || $rawText !== '') {
+            $imageBase64 = null;
+            $mimeType = 'image/jpeg';
+            if ($hasImage && file_exists($uploadedFile->getRealPath())) {
+                $imageBase64 = base64_encode((string) file_get_contents($uploadedFile->getRealPath()));
+                $mimeType = $uploadedFile->getMimeType() ?: 'image/jpeg';
             }
-        } else {
-            // Ketik cepat teks nota -> 100% Menggunakan Regex Parser Lokal (0 Token API!)
-            $source = 'Regex NLP Lokal (0 Token API)';
+
+            $catalogNames = $ingredients->pluck('name')->toArray();
+            $aiData = $geminiService->parseReceiptImageAndText($imageBase64, $mimeType, $rawText, $catalogNames);
+
+            if (!empty($aiData)) {
+                $source = $hasImage ? 'Google Gemini 2.5 Flash Vision OCR' : 'Google Gemini 2.5 Flash NLP';
+                $items = $this->mapAiExtractedItemsToIngredients($aiData, $ingredients);
+            }
+        }
+
+        // 2. Fallback: Jika Gemini API tidak merespons atau offline, gunakan Regex Fallback lokal
+        if (empty($items)) {
+            $source = 'Regex NLP Lokal (Fallback Cerdas)';
             $textToParse = $rawText ?: 'Beli cabai keriting 8kg 360000, daun jeruk 10 ikat 100000, jagung manis 12kg 144000';
             $items = $this->parseTextWithLocalEngine($textToParse, $ingredients);
         }
@@ -121,9 +134,71 @@ class PurchaseController extends Controller
             'items'         => $items,
             'total_amount'  => $totalSubtotal,
             'message'       => count($items) > 0
-                ? count($items) . ' komoditas pasar berhasil diekstrak dan foto struk tersimpan (' . $source . ').'
+                ? count($items) . ' komoditas pasar berhasil diekstrak (' . $source . ').'
                 : 'Belum ada komoditas yang cocok dari catatan nota. Pastikan menyebut nama barang dan jumlahnya.',
         ]);
+    }
+
+    /**
+     * Memetakan data hasil parsing AI Gemini ke dalam model Ingredient warung.
+     */
+    protected function mapAiExtractedItemsToIngredients(array $aiData, Collection $ingredients): array
+    {
+        $mapped = [];
+
+        foreach ($aiData as $row) {
+            $rawName = trim((string) ($row['nama'] ?? $row['name'] ?? ''));
+            if ($rawName === '') {
+                continue;
+            }
+
+            $matchedIngredient = $this->matchIngredientFromClause($rawName, $ingredients);
+            if (! $matchedIngredient) {
+                // Pencarian fuzzy mengandung teks
+                $matchedIngredient = $ingredients->first(function ($ing) use ($rawName) {
+                    return stripos($ing->name, $rawName) !== false || stripos($rawName, $ing->name) !== false;
+                });
+            }
+
+            if (! $matchedIngredient) {
+                continue;
+            }
+
+            $qty = max(0.1, (float) ($row['qty'] ?? 1));
+            $unitPrice = (float) ($row['harga_satuan'] ?? 0);
+            $subtotal = (float) ($row['total_harga'] ?? ($unitPrice * $qty));
+
+            if ($subtotal <= 0 && $unitPrice <= 0) {
+                $unitPrice = (float) $matchedIngredient->cost_per_unit;
+                $subtotal = round($qty * $unitPrice, 0);
+            } elseif ($subtotal <= 0) {
+                $subtotal = round($qty * $unitPrice, 0);
+            } elseif ($unitPrice <= 0) {
+                $unitPrice = round($subtotal / $qty, 0);
+            }
+
+            $oldStock = max(0.0, (float) $matchedIngredient->current_stock);
+            $oldHpp   = max(0.0, (float) $matchedIngredient->cost_per_unit);
+            $newStock = $oldStock + $qty;
+            $newHpp   = $newStock > 0 ? round((($oldStock * $oldHpp) + $subtotal) / $newStock, 0) : $oldHpp;
+
+            $mapped[] = [
+                'ingredient_id' => $matchedIngredient->id,
+                'name'          => $matchedIngredient->name,
+                'unit'          => $matchedIngredient->unit,
+                'quantity'      => $qty,
+                'unit_price'    => $unitPrice,
+                'subtotal'      => $subtotal,
+                'old_stock'     => $oldStock,
+                'new_stock'     => $newStock,
+                'old_cost'      => $oldHpp,
+                'new_cost'      => $newHpp,
+                'cost_diff'     => $newHpp - $oldHpp,
+                'supplier_name' => $matchedIngredient->supplier?->name ?? 'Pasar Induk',
+            ];
+        }
+
+        return $mapped;
     }
 
     /**

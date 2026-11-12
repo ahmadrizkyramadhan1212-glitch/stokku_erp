@@ -5,7 +5,9 @@ namespace App\Http\Controllers;
 use App\Models\DailySale;
 use App\Models\DailySaleItem;
 use App\Models\MenuItem;
+use App\Services\GeminiService;
 use Carbon\Carbon;
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 
 class AnalysisController extends Controller
@@ -24,6 +26,64 @@ class AnalysisController extends Controller
         $regressionResult = $this->runRegression();
 
         return view('analysis.prediksi', compact('dataScore', 'regressionResult'));
+    }
+
+    /**
+     * Fitur 3: AI Business Insight pada Matriks BCG.
+     */
+    public function aiBcgInsight(Request $request, GeminiService $geminiService)
+    {
+        $classification = $this->runClassification();
+        $items = $classification['items'] ?? [];
+
+        $grouped = [
+            'Star'      => [],
+            'Plowhorse' => [],
+            'Puzzle'    => [],
+            'Dog'       => [],
+        ];
+
+        foreach ($items as $item) {
+            $q = $item['bcg_quadrant'] ?? 'Dog';
+            if (isset($grouped[$q])) {
+                $grouped[$q][] = $item['name'] . ' (' . ($item['total_qty'] ?? 0) . ' unit terjual, margin Rp ' . number_format((float) ($item['margin'] ?? 0), 0, ',', '.') . ')';
+            }
+        }
+
+        $summary = [
+            'threshold_qty'    => $classification['threshold_qty'] ?? 0,
+            'threshold_margin' => $classification['threshold_margin'] ?? 0,
+            'quadrant_counts'  => $classification['quadrant_counts'] ?? [],
+            'items_sample'     => [
+                'Star'      => array_slice($grouped['Star'], 0, 6),
+                'Plowhorse' => array_slice($grouped['Plowhorse'], 0, 6),
+                'Puzzle'    => array_slice($grouped['Puzzle'], 0, 6),
+                'Dog'       => array_slice($grouped['Dog'], 0, 6),
+            ],
+        ];
+
+        $insight = $geminiService->analyzeBcgPortfolio($summary);
+
+        return response()->json([
+            'success' => true,
+            'insight' => $insight,
+        ]);
+    }
+
+    /**
+     * Fitur 4: AI Predictive Analytics & Interpretasi Regresi Linier (Y = a + bX).
+     */
+    public function aiPrediksiInsight(Request $request, GeminiService $geminiService)
+    {
+        $regressionResult = $this->runRegression();
+        $predictions = $regressionResult['predictions'] ?? [];
+
+        $interpretation = $geminiService->interpretRegressionTrend($predictions);
+
+        return response()->json([
+            'success'        => true,
+            'interpretation' => $interpretation,
+        ]);
     }
 
     // ─────────────────────────────────────────────────────────────────────────

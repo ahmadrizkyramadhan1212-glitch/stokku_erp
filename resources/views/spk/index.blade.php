@@ -20,24 +20,7 @@
         $outflowBarPct = min(100, max(12, round((($totalOutflow > 0 ? $totalOutflow : $shoppingModal) / $maxChartVal) * 100)));
     @endphp
 
-    <div x-data="{
-            filterStatus: 'KRITIS',
-            searchQuery: '',
-            matchesRow(name, kategori, status, isFifo) {
-                const q = (this.searchQuery || '').trim().toLowerCase();
-                if (q.length > 0) {
-                    if (!String(name).toLowerCase().includes(q) && !String(kategori).toLowerCase().includes(q)) {
-                        return false;
-                    }
-                }
-                if (this.filterStatus === 'ALL') return true;
-                if (this.filterStatus === 'KRITIS') return status === 'habis' || status === 'menipis';
-                if (this.filterStatus === 'HABIS') return status === 'habis';
-                if (this.filterStatus === 'MENIPIS') return status === 'menipis';
-                if (this.filterStatus === 'SISA_KEMARIN') return !!isFifo;
-                return true;
-            }
-        }"
+    <div x-data="spkManager()"
         class="flex flex-col gap-6 pb-10">
 
         <!-- ===================================================================
@@ -344,6 +327,95 @@
         </div>
 
         <!-- ===================================================================
+             AI SMART RESTOCK & ASISTEN ALOKASI MODAL BELANJA (GEMINI 2.5 FLASH)
+             =================================================================== -->
+        <section class="bg-gradient-to-br from-white via-teal-50/20 to-white dark:from-slate-900 dark:via-teal-950/20 dark:to-slate-900 rounded-3xl p-6 shadow-md dark:shadow-lg dark:shadow-teal-950/40 border border-teal-200/80 dark:border-teal-500/30 flex flex-col gap-4">
+            <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 border-b border-teal-100 dark:border-teal-900/50">
+                <div class="flex items-center gap-3">
+                    <div class="w-11 h-11 rounded-2xl bg-gradient-to-tr from-[#0D9488] to-emerald-500 text-white shadow-md shadow-teal-500/20 flex items-center justify-center shrink-0">
+                        <span class="material-symbols-outlined text-[22px]">smart_toy</span>
+                    </div>
+                    <div>
+                        <div class="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-teal-100/80 dark:bg-teal-950/80 text-[#0D9488] dark:text-teal-300 text-[10px] font-black uppercase tracking-wider">
+                            <span class="w-1.5 h-1.5 rounded-full bg-teal-500 animate-pulse"></span>
+                            AI Smart Restock &bull; Google Gemini 2.5 Flash
+                        </div>
+                        <h2 class="text-base sm:text-lg font-extrabold text-[#0F172A] dark:text-slate-100 mt-0.5">
+                            Asisten Alokasi Modal Belanja Pasar
+                        </h2>
+                    </div>
+                </div>
+
+                <div class="text-xs text-slate-500 dark:text-slate-400">
+                    Memadukan skor SAW &amp; proteksi sayur cepat busuk
+                </div>
+            </div>
+
+            <!-- Kontrol Input Modal & Tombol Racik AI -->
+            <div class="flex flex-col md:flex-row md:items-end gap-3">
+                <div class="flex-1 space-y-2">
+                    <label class="block text-xs font-bold text-slate-700 dark:text-slate-300">
+                        Simulasi Modal Belanja Hari Ini (Rp):
+                    </label>
+                    <div class="relative">
+                        <span class="absolute left-3.5 top-1/2 -translate-y-1/2 text-xs font-bold text-slate-400">Rp</span>
+                        <input type="number"
+                               x-model.number="aiBudgetModal"
+                               step="50000"
+                               min="50000"
+                               placeholder="750000"
+                               class="w-full bg-white dark:bg-slate-950 border border-slate-200 dark:border-slate-700 rounded-2xl pl-10 pr-4 py-2.5 text-sm font-extrabold text-[#0F172A] dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-teal-600 transition" />
+                    </div>
+                    <!-- Quick Preset Pills -->
+                    <div class="flex items-center gap-1.5 flex-wrap pt-1">
+                        <button type="button" @click="aiBudgetModal = 500000" class="px-2.5 py-1 rounded-lg text-[11px] font-bold border transition cursor-pointer" :class="aiBudgetModal === 500000 ? 'bg-teal-600 text-white border-teal-600' : 'bg-white dark:bg-slate-950 text-slate-600 dark:text-slate-300 border-slate-200 dark:border-slate-700 hover:bg-slate-100'">Rp 500.000</button>
+                        <button type="button" @click="aiBudgetModal = 750000" class="px-2.5 py-1 rounded-lg text-[11px] font-bold border transition cursor-pointer" :class="aiBudgetModal === 750000 ? 'bg-teal-600 text-white border-teal-600' : 'bg-white dark:bg-slate-950 text-slate-600 dark:text-slate-300 border-slate-200 dark:border-slate-700 hover:bg-slate-100'">Rp 750.000</button>
+                        <button type="button" @click="aiBudgetModal = 1000000" class="px-2.5 py-1 rounded-lg text-[11px] font-bold border transition cursor-pointer" :class="aiBudgetModal === 1000000 ? 'bg-teal-600 text-white border-teal-600' : 'bg-white dark:bg-slate-950 text-slate-600 dark:text-slate-300 border-slate-200 dark:border-slate-700 hover:bg-slate-100'">Rp 1.000.000</button>
+                        <button type="button" @click="aiBudgetModal = 1500000" class="px-2.5 py-1 rounded-lg text-[11px] font-bold border transition cursor-pointer" :class="aiBudgetModal === 1500000 ? 'bg-teal-600 text-white border-teal-600' : 'bg-white dark:bg-slate-950 text-slate-600 dark:text-slate-300 border-slate-200 dark:border-slate-700 hover:bg-slate-100'">Rp 1.500.000</button>
+                    </div>
+                </div>
+
+                <button type="button"
+                        @click="generateAiRestock()"
+                        :disabled="isGeneratingRestock"
+                        class="py-2.5 px-5 rounded-2xl bg-gradient-to-r from-[#0D9488] to-[#0F766E] hover:opacity-95 text-white text-xs sm:text-sm font-extrabold shadow-md shadow-teal-500/30 flex items-center justify-center gap-2 transition active:scale-95 cursor-pointer disabled:opacity-50 shrink-0">
+                    <template x-if="isGeneratingRestock">
+                        <span class="flex items-center gap-2">
+                            <svg class="animate-spin h-4 w-4 text-white" fill="none" viewBox="0 0 24 24">
+                                <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                                <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8H4z"></path>
+                            </svg>
+                            <span>AI Sedang Meracik...</span>
+                        </span>
+                    </template>
+                    <template x-if="!isGeneratingRestock">
+                        <span class="flex items-center gap-2">
+                            <span class="material-symbols-outlined text-[19px]">auto_awesome</span>
+                            <span>Racik Daftar Belanja AI</span>
+                        </span>
+                    </template>
+                </button>
+            </div>
+
+            <!-- Card Hasil Rekomendasi Alokasi Belanja AI -->
+            <div x-show="aiRestockResult" x-cloak class="mt-2 p-5 rounded-2xl bg-white dark:bg-slate-950 border border-teal-200 dark:border-teal-900/60 shadow-inner">
+                <div class="flex items-center justify-between pb-3 mb-3 border-b border-slate-100 dark:border-slate-800">
+                    <div class="flex items-center gap-2">
+                        <span class="material-symbols-outlined text-[18px] text-teal-600">verified</span>
+                        <span class="text-xs font-extrabold text-slate-900 dark:text-slate-100">Hasil Analisis Asisten Kulakan Pasar</span>
+                    </div>
+                    <button type="button"
+                            @click="navigator.clipboard.writeText(aiRestockResult); alert('Daftar belanja AI berhasil disalin!')"
+                            class="text-[11px] font-bold text-teal-600 dark:text-teal-400 hover:underline flex items-center gap-1 cursor-pointer">
+                        <span class="material-symbols-outlined text-[15px]">content_copy</span>
+                        <span>Salin Teks</span>
+                    </button>
+                </div>
+                <div x-html="formatAiMarkdown(aiRestockResult)" class="text-xs text-slate-700 dark:text-slate-300 leading-relaxed space-y-2"></div>
+            </div>
+        </section>
+
+        <!-- ===================================================================
              3. DAFTAR URUTAN PRIORITAS BELANJA PASAR (BAHASA WARUNG BERSIH)
              Kolom: Urutan, Nama Barang, Status Stok, Kecepatan Laku, dan Saran Beli
              =================================================================== -->
@@ -542,4 +614,73 @@
         @include('partials.wa-report-card', ['waCard' => $waCard, 'variant' => 'prioritas'])
 
     </div>
+
+    <script>
+        window.spkManager = function() {
+            return {
+                filterStatus: 'KRITIS',
+                searchQuery: '',
+                aiBudgetModal: 750000,
+                isGeneratingRestock: false,
+                aiRestockResult: '',
+                formatAiMarkdown(text) {
+                    if (!text) return '';
+                    let escaped = text
+                        .replace(/&/g, '&amp;')
+                        .replace(/</g, '&lt;')
+                        .replace(/>/g, '&gt;');
+                    escaped = escaped.replace(/^### (.*$)/gim, '<h4 class="text-sm font-black text-teal-800 dark:text-teal-300 mt-2 mb-1">$1</h4>');
+                    escaped = escaped.replace(/^## (.*$)/gim, '<h3 class="text-base font-black text-slate-900 dark:text-slate-100 mt-2 mb-1">$1</h3>');
+                    escaped = escaped.replace(/\*\*(.*?)\*\*/g, '<strong class="font-bold text-slate-900 dark:text-slate-100">$1</strong>');
+                    escaped = escaped.replace(/\*(.*?)\*/g, '<em class="italic text-slate-600 dark:text-slate-400">$1</em>');
+                    escaped = escaped.replace(/^\s*-\s+(.*$)/gim, '<li class="ml-4 list-disc text-xs leading-relaxed text-slate-700 dark:text-slate-300">$1</li>');
+                    escaped = escaped.replace(/\n/g, '<br>');
+                    return escaped;
+                },
+                async generateAiRestock() {
+                    if (this.isGeneratingRestock) return;
+                    this.isGeneratingRestock = true;
+                    try {
+                        const res = await fetch('{{ route('spk.ai_recommendation') }}', {
+                            method: 'POST',
+                            headers: {
+                                'Content-Type': 'application/json',
+                                'Accept': 'application/json',
+                                'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || ''
+                            },
+                            body: JSON.stringify({ budget_modal: this.aiBudgetModal, days: {{ $days ?? 30 }} })
+                        });
+                        const data = await res.json();
+                        if (data && data.recommendation) {
+                            this.aiRestockResult = data.recommendation;
+                        }
+                    } catch (e) {
+                        this.aiRestockResult = 'Terjadi kendala saat meracik rekomendasi belanja AI.';
+                    } finally {
+                        this.isGeneratingRestock = false;
+                    }
+                },
+                matchesRow(name, kategori, status, isFifo) {
+                    const q = (this.searchQuery || '').trim().toLowerCase();
+                    if (q.length > 0) {
+                        if (!String(name).toLowerCase().includes(q) && !String(kategori).toLowerCase().includes(q)) {
+                            return false;
+                        }
+                    }
+                    if (this.filterStatus === 'ALL') return true;
+                    if (this.filterStatus === 'KRITIS') return status === 'habis' || status === 'menipis';
+                    if (this.filterStatus === 'HABIS') return status === 'habis';
+                    if (this.filterStatus === 'MENIPIS') return status === 'menipis';
+                    if (this.filterStatus === 'SISA_KEMARIN') return !!isFifo;
+                    return true;
+                }
+            };
+        };
+
+        document.addEventListener('alpine:init', () => {
+            if (typeof Alpine !== 'undefined' && typeof window.spkManager === 'function') {
+                Alpine.data('spkManager', window.spkManager);
+            }
+        });
+    </script>
 </x-app-layout>

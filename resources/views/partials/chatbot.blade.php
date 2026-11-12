@@ -1,147 +1,7 @@
-﻿{{-- Bottom Sheet / Modal Asisten AI "Falah" (100% Pure Vector SVG - 0 Emoji) --}}
-<div x-data="{
-        isOpen: false,
-        userInput: '',
-        isLoading: false,
-        isListening: false,
-        messages: [
-            {
-                sender: 'bot',
-                text: 'Assalamu\'alaikum! Ada yang bisa Falah bantu untuk cek stok atau belanja warung hari ini?',
-                time: '{{ now()->format('H:i') }}'
-            }
-        ],
-        init() {
-            this.$watch('messages', () => {
-                this.$nextTick(() => {
-                    this.scrollToBottom();
-                });
-            });
-            this.$watch('isOpen', (val) => {
-                if (val) {
-                    this.$nextTick(() => {
-                        this.scrollToBottom();
-                    });
-                }
-            });
-        },
-        scrollToBottom() {
-            const container = document.getElementById('chatMessagesContainer');
-            if (container) {
-                container.scrollTop = container.scrollHeight;
-            }
-        },
-        formatText(text) {
-            if (!text) return '';
-            let formatted = text.replace(/\n/g, '<br>');
-            formatted = formatted.replace(/\*(.*?)\*/g, '<strong>$1</strong>');
-            return formatted;
-        },
-        getCurrentTime() {
-            const d = new Date();
-            const h = String(d.getHours()).padStart(2, '0');
-            const m = String(d.getMinutes()).padStart(2, '0');
-            return `${h}:${m}`;
-        },
-        sendQuick(actionType, label) {
-            if (this.isLoading) return;
-            this.messages.push({
-                sender: 'user',
-                text: label,
-                time: this.getCurrentTime()
-            });
-            this.executeRequest({ action: actionType, message: label });
-        },
-        send() {
-            const txt = this.userInput.trim();
-            if (!txt || this.isLoading) return;
-
-            this.messages.push({
-                sender: 'user',
-                text: txt,
-                time: this.getCurrentTime()
-            });
-            this.userInput = '';
-
-            this.executeRequest({ message: txt });
-        },
-        async executeRequest(payload) {
-            this.isLoading = true;
-            try {
-                const res = await fetch('{{ route('chatbot.message') }}', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'Accept': 'application/json',
-                        'X-CSRF-TOKEN': document.querySelector('meta[name=\'csrf-token\']')?.getAttribute('content') || ''
-                    },
-                    body: JSON.stringify(payload)
-                });
-                const data = await res.json();
-                this.messages.push({
-                    sender: 'bot',
-                    text: data.reply || 'Maaf, Falah belum memahami instruksi tersebut. Silakan coba lagi.',
-                    time: this.getCurrentTime()
-                });
-            } catch (err) {
-                this.messages.push({
-                    sender: 'bot',
-                    text: 'Terjadi kendala jaringan. Pastikan server aktif dan coba kembali.',
-                    time: this.getCurrentTime()
-                });
-            } finally {
-                this.isLoading = false;
-            }
-        },
-        toggleVoice() {
-            const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
-            if (!SpeechRecognition) {
-                alert('Browser Anda belum mendukung input suara. Silakan ketik langsung pada kotak pesan.');
-                return;
-            }
-
-            if (this.isListening) {
-                this.isListening = false;
-                return;
-            }
-
-            const recognition = new SpeechRecognition();
-            recognition.lang = 'id-ID';
-            recognition.continuous = false;
-            recognition.interimResults = false;
-
-            this.isListening = true;
-
-            recognition.onresult = (event) => {
-                const transcript = event.results[0][0].transcript;
-                if (transcript) {
-                    this.userInput = transcript;
-                    this.send();
-                }
-            };
-
-            recognition.onerror = () => {
-                this.isListening = false;
-            };
-
-            recognition.onend = () => {
-                this.isListening = false;
-            };
-
-            recognition.start();
-        },
-        resetChat() {
-            this.messages = [
-                {
-                    sender: 'bot',
-                    text: 'Assalamu\'alaikum! Ada yang bisa Falah bantu untuk cek stok atau belanja warung hari ini?',
-                    time: this.getCurrentTime()
-                }
-            ];
-        }
-    }"
-    @toggle-falah-ai.window="isOpen = !isOpen"
-    class="relative z-50">
+{{-- Bottom Sheet / Modal Asisten AI "Tanya Stokku" (Google Gemini 2.5 Flash) --}}
+<div x-data="falahAiChat()"
+     @toggle-falah-ai.window="isOpen = !isOpen"
+     class="relative z-50">
 
     {{-- Backdrop Gelap Halus Saat Modal Falah Dibuka --}}
     <div x-show="isOpen"
@@ -263,21 +123,22 @@
                     </svg>
                 </div>
 
-                {{-- KOLOM KANAN (7 KOLOM): IDENTITAS FALAH --}}
+                {{-- KOLOM KANAN (7 KOLOM): IDENTITAS TANYA STOKKU AI --}}
                 <div class="col-span-7 flex flex-col items-start justify-center pr-4">
-                    {{-- Badge Kapsul Putih: ASISTEN AI STOKKU --}}
-                    <span class="inline-flex items-center px-3 py-1 rounded-full bg-white text-[#0F766E] text-[11px] font-extrabold tracking-wider uppercase shadow-sm mb-2">
-                        ASISTEN AI STOKKU
+                    {{-- Badge Kapsul Putih: TANYA STOKKU AI --}}
+                    <span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-white text-[#0F766E] text-[10px] font-black tracking-wider uppercase shadow-sm mb-2">
+                        <span class="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></span>
+                        Tanya Stokku AI
                     </span>
 
-                    {{-- Judul Besar: Falah --}}
-                    <h3 class="text-3xl font-extrabold text-white tracking-tight leading-none">
-                        Falah
+                    {{-- Judul Besar: Asisten Pintar --}}
+                    <h3 class="text-2xl font-extrabold text-white tracking-tight leading-none">
+                        Tanya Stokku
                     </h3>
 
                     {{-- Tagline --}}
-                    <p class="text-xs text-teal-100 font-medium leading-relaxed mt-2">
-                        Teman yang bantu stokmu makin lancar dan berkah.
+                    <p class="text-xs text-teal-100 font-medium leading-relaxed mt-1.5">
+                        Asisten Cerdas &bull; Google Gemini 2.5 Flash
                     </p>
                 </div>
             </div>
@@ -334,61 +195,44 @@
         </div>
 
         {{-- ===============================================================
-             4 TOMBOL PERTANYAAN CEPAT (QUICK REPLY CHIPS) DENGAN IKON <SVG> MURNI
+             3 TOMBOL QUICK PROMPT SEKALI KLIK TANYA STOKKU AI (GEMINI 2.5 FLASH)
              =============================================================== --}}
         <div class="px-3.5 py-2.5 bg-white dark:bg-slate-900 border-t border-slate-200 dark:border-slate-700">
-            <div class="grid grid-cols-1 sm:grid-cols-2 gap-1.5">
-                {{-- Chip 1: [SVG Ikon Keranjang] Apa yang wajib dibeli besok? --}}
+            <div class="flex flex-col gap-1.5">
+                {{-- Quick Prompt 1: Sayur apa yang harus diobral sore ini biar nggak busuk? --}}
                 <button type="button"
-                        @click="sendQuick('wajib_beli', 'Apa yang wajib dibeli besok?')"
+                        @click="sendQuick('obral_sore', 'Sayur apa yang harus diobral sore ini biar nggak busuk?')"
                         :disabled="isLoading"
-                        class="flex items-center gap-2 px-3 py-2 rounded-xl bg-teal-50/90 hover:bg-teal-100 dark:bg-slate-950 dark:hover:bg-teal-950/70 text-slate-900 dark:text-teal-200 border border-slate-200 dark:border-slate-700 text-[11px] font-bold text-left transition active:scale-95 disabled:opacity-50 cursor-pointer">
+                        class="flex items-center gap-2.5 px-3 py-2 rounded-xl bg-amber-50/90 hover:bg-amber-100 dark:bg-amber-950/40 dark:hover:bg-amber-950/70 text-amber-900 dark:text-amber-200 border border-amber-200 dark:border-amber-500/30 text-[11px] font-bold text-left transition active:scale-98 disabled:opacity-50 cursor-pointer">
+                    <svg class="w-4 h-4 text-amber-600 dark:text-amber-400 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                        <path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/>
+                    </svg>
+                    <span class="truncate">Sayur apa yang harus diobral sore ini biar nggak busuk?</span>
+                </button>
+
+                {{-- Quick Prompt 2: Rekomendasi belanja besok pagi dengan modal Rp 750.000 --}}
+                <button type="button"
+                        @click="sendQuick('belanja_modal', 'Rekomendasi belanja besok pagi dengan modal Rp 750.000')"
+                        :disabled="isLoading"
+                        class="flex items-center gap-2.5 px-3 py-2 rounded-xl bg-teal-50/90 hover:bg-teal-100 dark:bg-slate-950 dark:hover:bg-teal-950/70 text-slate-900 dark:text-teal-200 border border-slate-200 dark:border-slate-700 text-[11px] font-bold text-left transition active:scale-98 disabled:opacity-50 cursor-pointer">
                     <svg class="w-4 h-4 text-[#0D9488] dark:text-teal-300 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
                         <circle cx="8" cy="21" r="1"/>
                         <circle cx="19" cy="21" r="1"/>
                         <path d="M2.05 2.05h2l2.66 12.42a2 2 0 0 0 2 1.58h9.78a2 2 0 0 0 1.95-1.57l1.65-7.43H5.12"/>
                     </svg>
-                    <span class="truncate">Apa yang wajib dibeli besok?</span>
+                    <span class="truncate">Rekomendasi belanja besok pagi dengan modal Rp 750.000</span>
                 </button>
 
-                {{-- Chip 2: [SVG Ikon Peringatan] Cek barang yang habis malam ini --}}
+                {{-- Quick Prompt 3: Bagaimana performa omzet dan barang terlaris hari ini? --}}
                 <button type="button"
-                        @click="sendQuick('stok_habis', 'Cek barang yang habis malam ini')"
+                        @click="sendQuick('performa_omzet', 'Bagaimana performa omzet dan barang terlaris hari ini?')"
                         :disabled="isLoading"
-                        class="flex items-center gap-2 px-3 py-2 rounded-xl bg-rose-50/90 hover:bg-rose-100 dark:bg-rose-950/40 dark:hover:bg-rose-950/70 text-rose-800 dark:text-rose-200 border border-rose-200 dark:border-rose-500/30 text-[11px] font-bold text-left transition active:scale-95 disabled:opacity-50 cursor-pointer">
-                    <svg class="w-4 h-4 text-rose-600 dark:text-rose-400 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-                        <path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z"/>
-                        <path d="M12 9v4"/>
-                        <path d="M12 17h.01"/>
-                    </svg>
-                    <span class="truncate">Cek barang yang habis malam ini</span>
-                </button>
-
-                {{-- Chip 3: [SVG Ikon Kotak Jam] Barang sisa kemarin yang harus dijual duluan --}}
-                <button type="button"
-                        @click="sendQuick('sisa_kemarin', 'Barang sisa kemarin yang harus dijual duluan')"
-                        :disabled="isLoading"
-                        class="flex items-center gap-2 px-3 py-2 rounded-xl bg-amber-50/90 hover:bg-amber-100 dark:bg-amber-950/40 dark:hover:bg-amber-950/70 text-amber-900 dark:text-amber-200 border border-amber-200 dark:border-amber-500/30 text-[11px] font-bold text-left transition active:scale-95 disabled:opacity-50 cursor-pointer">
-                    <svg class="w-4 h-4 text-amber-600 dark:text-amber-400 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-                        <path d="M21 8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l2-1.14"/>
-                        <path d="m3.3 7 8.7 5 8.7-5"/>
-                        <path d="M12 22V12"/>
-                        <circle cx="18" cy="18" r="4"/>
-                        <path d="M18 16.5V18l1 1"/>
-                    </svg>
-                    <span class="truncate">Barang sisa kemarin yang harus dijual duluan</span>
-                </button>
-
-                {{-- Chip 4: [SVG Ikon Grafik Uang] Berapa keuntungan bersih hari ini? --}}
-                <button type="button"
-                        @click="sendQuick('untung_hari_ini', 'Berapa keuntungan bersih hari ini?')"
-                        :disabled="isLoading"
-                        class="flex items-center gap-2 px-3 py-2 rounded-xl bg-emerald-50/90 hover:bg-emerald-100 dark:bg-emerald-950/40 dark:hover:bg-emerald-950/70 text-emerald-800 dark:text-emerald-200 border border-emerald-200 dark:border-emerald-500/30 text-[11px] font-bold text-left transition active:scale-95 disabled:opacity-50 cursor-pointer">
+                        class="flex items-center gap-2.5 px-3 py-2 rounded-xl bg-emerald-50/90 hover:bg-emerald-100 dark:bg-emerald-950/40 dark:hover:bg-emerald-950/70 text-emerald-800 dark:text-emerald-200 border border-emerald-200 dark:border-emerald-500/30 text-[11px] font-bold text-left transition active:scale-98 disabled:opacity-50 cursor-pointer">
                     <svg class="w-4 h-4 text-emerald-600 dark:text-emerald-400 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
                         <path d="M3 3v18h18"/>
                         <path d="m19 9-5 5-4-4-3 3"/>
                     </svg>
-                    <span class="truncate">Berapa keuntungan bersih hari ini?</span>
+                    <span class="truncate">Bagaimana performa omzet dan barang terlaris hari ini?</span>
                 </button>
             </div>
         </div>
@@ -401,14 +245,14 @@
                 <input type="text"
                        x-model="userInput"
                        :disabled="isLoading"
-                       placeholder="Tanya Falah atau ketik: stok cabai habis..."
+                       placeholder="Tanya Stokku AI atau ketik: stok cabai habis..."
                        class="flex-1 bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-700 rounded-2xl px-3.5 py-2.5 text-xs font-semibold text-slate-900 dark:text-slate-100 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-[#0D9488] transition disabled:opacity-50">
 
                 {{-- Tombol Input Suara (Microphone SVG) --}}
                 <button type="button"
                         @click="toggleVoice()"
                         :class="isListening ? 'bg-rose-600 text-white animate-pulse' : 'bg-teal-50 dark:bg-slate-950 hover:bg-teal-100 text-[#0D9488] dark:text-teal-300 border border-slate-200 dark:border-slate-700'"
-                        :title="isListening ? 'Sedang mendengarkan suara... Ketuk untuk berhenti' : 'Bicara dengan Falah'"
+                        :title="isListening ? 'Sedang mendengarkan suara... Ketuk untuk berhenti' : 'Bicara dengan Tanya Stokku AI'"
                         aria-label="Input Suara"
                         class="w-10 h-10 rounded-2xl flex items-center justify-center shrink-0 transition cursor-pointer">
                     <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
@@ -434,3 +278,166 @@
 
     </div>
 </div>
+
+<script>
+    window.falahAiChat = function() {
+        return {
+            isOpen: false,
+            userInput: '',
+            isLoading: false,
+            isListening: false,
+            messages: [
+                {
+                    sender: 'bot',
+                    text: 'Assalamu\'alaikum! Saya **Tanya Stokku AI**, asisten cerdas Warung Adijaya. Siap bantu analisa stok kritis, rekomendasi kulakan pasar, obral sayur anti-busuk, dan pantau keuangan warung hari ini.',
+                    time: '{{ now()->format('H:i') }}'
+                }
+            ],
+            init() {
+                this.$watch('messages', () => {
+                    this.$nextTick(() => {
+                        this.scrollToBottom();
+                    });
+                });
+                this.$watch('isOpen', (val) => {
+                    if (val) {
+                        this.$nextTick(() => {
+                            this.scrollToBottom();
+                        });
+                    }
+                });
+            },
+            scrollToBottom() {
+                const container = document.getElementById('chatMessagesContainer');
+                if (container) {
+                    container.scrollTop = container.scrollHeight;
+                }
+            },
+            formatMessage(text) {
+                if (!text) return '';
+                let formatted = text
+                    .replace(/&/g, '&amp;')
+                    .replace(/</g, '&lt;')
+                    .replace(/>/g, '&gt;');
+                formatted = formatted.replace(/^#### (.*$)/gim, '<div class="text-[11px] font-black text-teal-700 dark:text-teal-300 mt-2 mb-0.5">$1</div>');
+                formatted = formatted.replace(/^### (.*$)/gim, '<div class="text-xs font-black text-teal-800 dark:text-teal-300 mt-2 mb-1">$1</div>');
+                formatted = formatted.replace(/\*\*(.*?)\*\*/g, '<strong class="font-bold text-slate-900 dark:text-slate-100">$1</strong>');
+                formatted = formatted.replace(/\*(.*?)\*/g, '<strong class="font-semibold text-slate-800 dark:text-slate-200">$1</strong>');
+                formatted = formatted.replace(/^\s*-\s+(.*$)/gim, '<div class="flex items-start gap-1.5 my-0.5"><span class="text-teal-500 font-bold">&bull;</span><span class="text-xs leading-relaxed">$1</span></div>');
+                formatted = formatted.replace(/\n/g, '<br>');
+                return formatted;
+            },
+            formatText(text) {
+                return this.formatMessage(text);
+            },
+            getCurrentTime() {
+                const d = new Date();
+                const h = String(d.getHours()).padStart(2, '0');
+                const m = String(d.getMinutes()).padStart(2, '0');
+                return `${h}:${m}`;
+            },
+            sendQuick(actionType, label) {
+                if (this.isLoading) return;
+                this.messages.push({
+                    sender: 'user',
+                    text: label,
+                    time: this.getCurrentTime()
+                });
+                this.executeRequest({ action: actionType, message: label });
+            },
+            send() {
+                const txt = this.userInput.trim();
+                if (!txt || this.isLoading) return;
+
+                this.messages.push({
+                    sender: 'user',
+                    text: txt,
+                    time: this.getCurrentTime()
+                });
+                this.userInput = '';
+
+                this.executeRequest({ message: txt });
+            },
+            async executeRequest(payload) {
+                this.isLoading = true;
+                try {
+                    const res = await fetch('{{ route('ai.chat') }}', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'Accept': 'application/json',
+                            'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || ''
+                        },
+                        body: JSON.stringify(payload)
+                    });
+                    const data = await res.json();
+                    this.messages.push({
+                        sender: 'bot',
+                        text: data.reply || 'Maaf, sistem belum memahami instruksi tersebut. Silakan coba kembali.',
+                        time: this.getCurrentTime()
+                    });
+                } catch (err) {
+                    this.messages.push({
+                        sender: 'bot',
+                        text: 'Terjadi kendala jaringan. Pastikan koneksi aktif dan coba kembali.',
+                        time: this.getCurrentTime()
+                    });
+                } finally {
+                    this.isLoading = false;
+                }
+            },
+            toggleVoice() {
+                const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+                if (!SpeechRecognition) {
+                    alert('Browser Anda belum mendukung input suara. Silakan ketik langsung pada kotak pesan.');
+                    return;
+                }
+
+                if (this.isListening) {
+                    this.isListening = false;
+                    return;
+                }
+
+                const recognition = new SpeechRecognition();
+                recognition.lang = 'id-ID';
+                recognition.continuous = false;
+                recognition.interimResults = false;
+
+                this.isListening = true;
+
+                recognition.onresult = (event) => {
+                    const transcript = event.results[0][0].transcript;
+                    if (transcript) {
+                        this.userInput = transcript;
+                        this.send();
+                    }
+                };
+
+                recognition.onerror = () => {
+                    this.isListening = false;
+                };
+
+                recognition.onend = () => {
+                    this.isListening = false;
+                };
+
+                recognition.start();
+            },
+            resetChat() {
+                this.messages = [
+                    {
+                        sender: 'bot',
+                        text: 'Assalamu\'alaikum! Saya **Tanya Stokku AI**, asisten cerdas Warung Adijaya. Siap bantu analisa stok kritis, rekomendasi kulakan pasar, obral sayur anti-busuk, dan pantau keuangan warung hari ini.',
+                        time: this.getCurrentTime()
+                    }
+                ];
+            }
+        };
+    };
+
+    document.addEventListener('alpine:init', () => {
+        if (typeof Alpine !== 'undefined' && typeof window.falahAiChat === 'function') {
+            Alpine.data('falahAiChat', window.falahAiChat);
+        }
+    });
+</script>

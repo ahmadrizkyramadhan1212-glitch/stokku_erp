@@ -1,5 +1,6 @@
 <x-app-layout>
-    <div class="space-y-6 pb-24">
+    <div x-data="bcgAnalysisManager()"
+        class="space-y-6 pb-24">
         {{-- Clean White Header --}}
         <div class="bg-white rounded-3xl p-4 sm:p-6 text-[#0F172A] shadow-xs border border-slate-200/80 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 dark:text-slate-100">
             <div class="flex items-start gap-3">
@@ -95,6 +96,64 @@
             </div>
         </div>
 
+        {{-- Panel AI Strategic Insight (BCG) --}}
+        <section class="bg-gradient-to-br from-white via-teal-50/20 to-white dark:from-slate-900 dark:via-teal-950/20 dark:to-slate-900 rounded-3xl p-6 shadow-md dark:shadow-lg dark:shadow-teal-950/40 border border-teal-200/80 dark:border-teal-500/30 flex flex-col gap-4">
+            <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 border-b border-teal-100 dark:border-teal-900/50">
+                <div class="flex items-center gap-3">
+                    <div class="w-11 h-11 rounded-2xl bg-gradient-to-tr from-[#0D9488] to-emerald-500 text-white shadow-md shadow-teal-500/20 flex items-center justify-center shrink-0">
+                        <span class="material-symbols-outlined text-[22px]">psychology</span>
+                    </div>
+                    <div>
+                        <div class="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-teal-100/80 dark:bg-teal-950/80 text-[#0D9488] dark:text-teal-300 text-[10px] font-black uppercase tracking-wider">
+                            <span class="w-1.5 h-1.5 rounded-full bg-teal-500 animate-pulse"></span>
+                            AI Strategic Insight (BCG) &bull; Google Gemini 2.5 Flash
+                        </div>
+                        <h2 class="text-base sm:text-lg font-extrabold text-[#0F172A] dark:text-slate-100 mt-0.5">
+                            Konsultan Strategi Portofolio &amp; Anti-Waste Warung
+                        </h2>
+                    </div>
+                </div>
+
+                <button type="button"
+                        @click="generateBcgInsight()"
+                        :disabled="isGeneratingBcg"
+                        class="py-2.5 px-5 rounded-2xl bg-gradient-to-r from-[#0D9488] to-[#0F766E] hover:opacity-95 text-white text-xs sm:text-sm font-extrabold shadow-md shadow-teal-500/30 flex items-center justify-center gap-2 transition active:scale-95 cursor-pointer disabled:opacity-50 shrink-0">
+                    <template x-if="isGeneratingBcg">
+                        <span class="flex items-center gap-2">
+                            <svg class="animate-spin h-4 w-4 text-white" fill="none" viewBox="0 0 24 24">
+                                <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                                <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8H4z"></path>
+                            </svg>
+                            <span>Menganalisis Portofolio...</span>
+                        </span>
+                    </template>
+                    <template x-if="!isGeneratingBcg">
+                        <span class="flex items-center gap-2">
+                            <span class="material-symbols-outlined text-[19px]">auto_awesome</span>
+                            <span>Generate Analisis AI</span>
+                        </span>
+                    </template>
+                </button>
+            </div>
+
+            <!-- Kontainer Hasil Analisis AI BCG -->
+            <div x-show="bcgInsight" x-cloak class="p-5 rounded-2xl bg-white dark:bg-slate-950 border border-teal-200 dark:border-teal-900/60 shadow-inner">
+                <div class="flex items-center justify-between pb-3 mb-3 border-b border-slate-100 dark:border-slate-800">
+                    <div class="flex items-center gap-2">
+                        <span class="material-symbols-outlined text-[18px] text-teal-600">verified</span>
+                        <span class="text-xs font-extrabold text-slate-900 dark:text-slate-100">Arahan Bisnis Owner: Jam Sibuk &amp; Bundling Anti-Waste</span>
+                    </div>
+                    <button type="button"
+                            @click="navigator.clipboard.writeText(bcgInsight); alert('Analisis BCG berhasil disalin!')"
+                            class="text-[11px] font-bold text-teal-600 dark:text-teal-400 hover:underline flex items-center gap-1 cursor-pointer">
+                        <span class="material-symbols-outlined text-[15px]">content_copy</span>
+                        <span>Salin Teks</span>
+                    </button>
+                </div>
+                <div x-html="formatAiMarkdown(bcgInsight)" class="text-xs text-slate-700 dark:text-slate-300 leading-relaxed space-y-2"></div>
+            </div>
+        </section>
+
         {{-- Daftar Kartu Komoditas Hasil Klasifikasi BCG --}}
         @if(empty($classificationResult['items']))
             <div class="text-center py-12 bg-white rounded-2xl border border-slate-200 shadow-sm">
@@ -176,4 +235,56 @@
             </div>
         @endif
     </div>
+
+    <script>
+        window.bcgAnalysisManager = function() {
+            return {
+                isGeneratingBcg: false,
+                bcgInsight: '',
+                formatAiMarkdown(text) {
+                    if (!text) return '';
+                    let escaped = text
+                        .replace(/&/g, '&amp;')
+                        .replace(/</g, '&lt;')
+                        .replace(/>/g, '&gt;');
+                    escaped = escaped.replace(/^#### (.*$)/gim, '<h5 class="text-xs font-black text-teal-800 dark:text-teal-300 mt-2 mb-1">$1</h5>');
+                    escaped = escaped.replace(/^### (.*$)/gim, '<h4 class="text-sm font-black text-teal-700 dark:text-teal-300 mt-2.5 mb-1">$1</h4>');
+                    escaped = escaped.replace(/^## (.*$)/gim, '<h3 class="text-base font-black text-slate-900 dark:text-slate-100 mt-3 mb-1.5">$1</h3>');
+                    escaped = escaped.replace(/\*\*(.*?)\*\*/g, '<strong class="font-bold text-slate-900 dark:text-slate-100">$1</strong>');
+                    escaped = escaped.replace(/\*(.*?)\*/g, '<em class="italic text-slate-600 dark:text-slate-400">$1</em>');
+                    escaped = escaped.replace(/^\s*-\s+(.*$)/gim, '<li class="ml-4 list-disc text-xs leading-relaxed text-slate-700 dark:text-slate-300">$1</li>');
+                    escaped = escaped.replace(/\n/g, '<br>');
+                    return escaped;
+                },
+                async generateBcgInsight() {
+                    if (this.isGeneratingBcg) return;
+                    this.isGeneratingBcg = true;
+                    try {
+                        const res = await fetch('{{ route('analysis.ai_bcg') }}', {
+                            method: 'POST',
+                            headers: {
+                                'Content-Type': 'application/json',
+                                'Accept': 'application/json',
+                                'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || ''
+                            }
+                        });
+                        const data = await res.json();
+                        if (data && data.insight) {
+                            this.bcgInsight = data.insight;
+                        }
+                    } catch (e) {
+                        this.bcgInsight = 'Terjadi kesalahan saat memproses analisis portofolio BCG.';
+                    } finally {
+                        this.isGeneratingBcg = false;
+                    }
+                }
+            };
+        };
+
+        document.addEventListener('alpine:init', () => {
+            if (typeof Alpine !== 'undefined' && typeof window.bcgAnalysisManager === 'function') {
+                Alpine.data('bcgAnalysisManager', window.bcgAnalysisManager);
+            }
+        });
+    </script>
 </x-app-layout>

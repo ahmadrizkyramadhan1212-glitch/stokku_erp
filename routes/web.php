@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\AiAssistantController;
 use App\Http\Controllers\AnalysisController;
 use App\Http\Controllers\BiHubController;
 use App\Http\Controllers\ChatbotController;
@@ -30,14 +31,16 @@ Route::middleware('auth')->group(function () {
 
     // ── Sistem Penunjang Keputusan (Decision Support System) ─────────────────
     Route::get('/spk', [SpkController::class, 'index'])->name('spk.index');
+    Route::post('/spk/ai-recommendation', [SpkController::class, 'aiRecommendRestock'])->name('spk.ai_recommendation');
     Route::get('/spk/export-pdf', [SpkController::class, 'exportPdf'])->name('spk.export');
 
     // ── Laporan Tutup Warung via WhatsApp (wa.me direct link) ─────────────
     Route::get('/wa-report/preview', [WaReportController::class, 'preview'])->name('wa_report.preview');
     Route::post('/wa-report/send', [WaReportController::class, 'send'])->name('wa_report.send');
 
-    // ── Chatbot AI Asisten Warung (Gemini API & Quick Chips) ──────────────
-    Route::post('/chatbot/message', [ChatbotController::class, 'sendMessage'])->name('chatbot.message');
+    // ── Asisten Virtual Interaktif "Tanya Stokku" (Contextual AI Chatbot) ──
+    Route::post('/ai/chat', [AiAssistantController::class, 'chat'])->name('ai.chat');
+    Route::post('/chatbot/message', [AiAssistantController::class, 'chat'])->name('chatbot.message');
 
     // ── Reports & Expenses ────────────────────────────────────────────────
     Route::get('/reports', [ReportController::class, 'index'])->name('reports.index');
@@ -76,7 +79,9 @@ Route::middleware('auth')->group(function () {
 
     // ── Analisis Data ─────────────────────────────────────────────────────
     Route::get('/analysis/klasifikasi', [AnalysisController::class, 'klasifikasi'])->name('analysis.klasifikasi');
+    Route::post('/analysis/ai-bcg', [AnalysisController::class, 'aiBcgInsight'])->name('analysis.ai_bcg');
     Route::get('/analysis/prediksi', [AnalysisController::class, 'prediksi'])->name('analysis.prediksi');
+    Route::post('/analysis/ai-prediksi', [AnalysisController::class, 'aiPrediksiInsight'])->name('analysis.ai_prediksi');
 
     // ── BI Hub (Business Intelligence) ───────────────────────────────────
     Route::get('/bi-hub', [BiHubController::class, 'index'])->name('bi-hub.index');

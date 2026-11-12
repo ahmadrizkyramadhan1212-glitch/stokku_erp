@@ -6,6 +6,7 @@ use App\Models\DailySaleItem;
 use App\Models\Ingredient;
 use App\Models\MenuItem;
 use App\Models\WaReportLog;
+use App\Services\GeminiService;
 use App\Services\WaReportService;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Carbon\Carbon;
@@ -67,6 +68,48 @@ class SpkController extends Controller
         $filename = 'Laporan_SPK_SAW_BCG_STOKKU_' . Carbon::now()->format('Ymd_His') . '.pdf';
 
         return $pdf->download($filename);
+    }
+
+    /**
+     * Fitur 2: AI Smart Restock & Asisten Alokasi Modal Belanja (Integrasi SPK SAW).
+     */
+    public function aiRecommendRestock(Request $request, GeminiService $geminiService)
+    {
+        $budget = max(50000, (float) $request->input('budget_modal', 750000));
+        $days = (int) $request->input('days', 30);
+        if (!in_array($days, [7, 14, 30, 90])) {
+            $days = 30;
+        }
+
+        $weights = $this->resolveWeights($request);
+        $spkData = $this->buildSpkData($days, $weights);
+        $sawItems = $spkData['sawItems'] ?? collect();
+
+        // Siapkan array data ringkas ranking teratas SAW
+        $topItems = $sawItems->take(20)->map(function ($it) {
+            return [
+                'name'                    => $it->name,
+                'stock_status'            => $it->stock_status,
+                'current_stock'           => (float) $it->current_stock,
+                'minimum_stock'           => (float) $it->minimum_stock,
+                'unit'                    => $it->unit,
+                'recommended_restock_qty' => (float) $it->recommended_restock_qty,
+                'cost_per_unit'           => (float) ($it->cost_per_unit ?? 0),
+                'selling_price'           => (float) ($it->price_eceran ?? 0),
+                'margin'                  => (float) ($it->c4_raw ?? 0),
+                'perishability_score'     => (int) ($it->perishability_score ?? 3),
+                'saw_score'               => (float) ($it->saw_score_exact ?? $it->saw_score ?? 0),
+                'rank'                    => (int) ($it->rank ?? 1),
+            ];
+        })->toArray();
+
+        $recommendation = $geminiService->recommendBudgetRestock($budget, $topItems);
+
+        return response()->json([
+            'success'        => true,
+            'budget'         => $budget,
+            'recommendation' => $recommendation,
+        ]);
     }
 
     /**
